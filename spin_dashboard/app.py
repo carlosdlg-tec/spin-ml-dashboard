@@ -71,7 +71,9 @@ st.markdown(f"""
 .chip img {{display: block;}}
 .chip .logo-alt {{color: #1F1E24; font-size: .9rem;}}
 .brandrow .cap {{flex: 1 1 auto; font-size: .9rem; opacity: .8; line-height: 1.2; min-width: 0;}}
-.brandrow .rate {{flex: 0 0 auto; font-size: 1.6rem; font-weight: 700; color: {ORANGE}; font-variant-numeric: tabular-nums;}}
+.brandrow .rate {{flex: 0 0 auto; height: 44px; box-sizing: border-box; display: inline-flex; align-items: center;
+  padding: 0 14px; background: #FFFFFF; border: 1px solid rgba(128,128,128,0.3); border-radius: 9px;
+  font-size: 1.6rem; font-weight: 700; color: #000000; font-variant-numeric: tabular-nums;}}
 
 /* ---------- persona cards (one grid row = equal heights) ---------- */
 .pcards {{display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 6px 0 4px; align-items: stretch;}}
@@ -259,7 +261,7 @@ with tab_over:
             st.slider('Commission on OXXO spend', 0.25, 2.0, BASE_OXXO, step=0.05, format='%.2f%%', key='c_oxxo_pct')
         with s2:
             chips = ''.join(f"<span class='chip'>{logo(f, alt, ht)}</span>" for f, alt, ht in
-                            [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('lacomer.png', 'La Comer', 30)])
+                            [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('soriana.svg', 'Soriana', 26)])
             st.markdown(f"<div class='brandrow'>{chips}<span class='cap'>Spend outside OXXO</span>"
                         f"<span class='rate'>{c_out * 100:.2f}%</span></div>", unsafe_allow_html=True)
             st.slider('Commission on spend outside OXXO', 0.25, 2.0, BASE_OUT, step=0.05, format='%.2f%%', key='c_out_pct')
@@ -386,16 +388,35 @@ with tab_pers:
     elif view == 'Radar':
         keys = list(METRICS)
         scale = personas[keys].max()                       # 1 = best persona on that metric
+
+        def luminance(hex_color):
+            r, g, b = (int(hex_color.lstrip('#')[i:i + 2], 16) / 255 for i in (0, 2, 4))
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+        def rgba(hex_color, alpha):
+            r, g, b = (int(hex_color.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4))
+            return f'rgba({r},{g},{b},{alpha})'
+
+        theta = [METRICS[k][0] for k in keys]
         fig = go.Figure()
-        for _, p in sub.iterrows():
+        # Darkest persona first = drawn at the back; lighter shapes on top stay visible.
+        for _, p in sub.assign(lum=sub['color'].map(luminance)).sort_values('lum').iterrows():
             r = (p[keys] / scale).tolist()
-            fig.add_scatterpolar(r=r + r[:1], theta=[METRICS[k][0] for k in keys] + [METRICS[keys[0]][0]],
-                                 name=p['name'], line=dict(color=p['color'], width=2), fill='toself', opacity=0.55,
+            fig.add_scatterpolar(r=r + r[:1], theta=theta + theta[:1], name=p['name'], fill='toself',
+                                 line=dict(color=p['color'], width=2.5), fillcolor=rgba(p['color'], 0.22),
+                                 marker=dict(size=6, color=p['color']), mode='lines+markers',
+                                 legendrank=ORDER.index(p['name']),
                                  customdata=[METRICS[k][1](p[k]) for k in keys] + [METRICS[keys[0]][1](p[keys[0]])],
                                  hovertemplate=f"<b>{p['name']}</b><br>%{{theta}}: %{{customdata}}<extra></extra>")
-        fig.update_layout(polar=dict(bgcolor='rgba(0,0,0,0)', radialaxis=dict(range=[0, 1], showticklabels=False, gridcolor=GRID),
-                                     angularaxis=dict(gridcolor=GRID)))
-        st.plotly_chart(style(fig, 520), width='stretch')
+        fig.update_layout(polar=dict(bgcolor='rgba(0,0,0,0)', domain=dict(x=[0, 0.78], y=[0, 1]),
+                                     radialaxis=dict(range=[0, 1], showticklabels=False, showline=False, ticks='', gridcolor=GRID),
+                                     angularaxis=dict(gridcolor=GRID, linecolor=GRID, rotation=90, direction='clockwise',
+                                                      tickfont=dict(size=12))))
+        style(fig, 560)
+        fig.update_layout(margin=dict(l=90, r=20, t=50, b=50),
+                          legend=dict(orientation='v', x=0.82, xanchor='left', y=0.5, yanchor='middle',
+                                      title=dict(text='Persona'), itemclick='toggle', itemdoubleclick='toggleothers'))
+        st.plotly_chart(fig, width='stretch')
         st.caption('Each axis is scaled to the persona with the highest value (= outer ring). Hover for the real values.')
     elif view == 'Heatmap':
         keys = list(METRICS)
