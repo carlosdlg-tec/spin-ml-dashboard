@@ -398,6 +398,8 @@ with tab_pers:
             return f'rgba({r},{g},{b},{alpha})'
 
         theta = [METRICS[k][0] for k in keys]
+        # Axis labels in black; in dark mode black would be invisible, so they use the theme's light text there.
+        RADAR_LABEL = '#ECEAF1' if getattr(st.context.theme, 'type', 'light') == 'dark' else '#000000'
         fig = go.Figure()
         # Darkest persona first = drawn at the back; lighter shapes on top stay visible.
         for _, p in sub.assign(lum=sub['color'].map(luminance)).sort_values('lum').iterrows():
@@ -411,7 +413,7 @@ with tab_pers:
         fig.update_layout(polar=dict(bgcolor='rgba(0,0,0,0)', domain=dict(x=[0, 0.78], y=[0, 1]),
                                      radialaxis=dict(range=[0, 1], showticklabels=False, showline=False, ticks='', gridcolor=GRID),
                                      angularaxis=dict(gridcolor=GRID, linecolor=GRID, rotation=90, direction='clockwise',
-                                                      tickfont=dict(size=12))))
+                                                      tickfont=dict(size=12, color=RADAR_LABEL))))
         style(fig, 560)
         fig.update_layout(margin=dict(l=90, r=20, t=50, b=50),
                           legend=dict(orientation='v', x=0.82, xanchor='left', y=0.5, yanchor='middle',
