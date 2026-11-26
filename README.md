@@ -36,6 +36,11 @@ Upload the contents of this folder to `MyDrive/SPIN_G3/` in Google Drive (so the
 `MyDrive/SPIN_G3/Dataset_clean.csv` and `MyDrive/SPIN_G3/Evidence 3/...`), open the notebook in Colab and run all cells.
 The last cell can create a temporary public link (Cloudflare tunnel) – Colab only.
 
+## Option D – Streamlit Community Cloud
+Deployed from this repo with main file `spin_dashboard/app.py`. Cloud installs `spin_dashboard/requirements.txt`
+and reads the theme from the root `.streamlit/config.toml` (keep it in sync with `spin_dashboard/.streamlit/config.toml`).
+Every push to `main` redeploys the app.
+
 ## Data not in the GitHub repo
 `Dataset_clean.csv` (146 MB) and `Evidence 3/g3_propensity_model_dataset.csv` (337 MB) are over GitHub's 100 MB
 file limit, so they are git-ignored. Copy them into the paths shown above before running the notebook.
