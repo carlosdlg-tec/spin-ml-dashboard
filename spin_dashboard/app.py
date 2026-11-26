@@ -249,23 +249,6 @@ with tab_over:
         f"<div class='tab-card' style='border-top:4px solid {color}'><div class='t'>{name}</div>"
         f"<div class='d'>{h(desc)}</div></div>" for name, color, desc in TAB_GUIDE) + "</div>", unsafe_allow_html=True)
 
-    with st.container(border=True):
-        section('CLTV commission assumptions')
-        st.markdown("<div class='note'>Team assumption; Spin does not publish its rates. "
-                    "The sliders update CLTV and revenue in every tab.</div>", unsafe_allow_html=True)
-        s1, s2 = st.columns(2, gap='large')
-        with s1:
-            st.markdown(f"<div class='brandrow'><span class='chip'>{logo('oxxo.svg', 'OXXO', 30)}</span>"
-                        f"<span class='cap'>Spend at OXXO</span>"
-                        f"<span class='rate'>{c_oxxo * 100:.2f}%</span></div>", unsafe_allow_html=True)
-            st.slider('Commission on OXXO spend', 0.25, 2.0, BASE_OXXO, step=0.05, format='%.2f%%', key='c_oxxo_pct')
-        with s2:
-            chips = ''.join(f"<span class='chip'>{logo(f, alt, ht)}</span>" for f, alt, ht in
-                            [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('soriana.svg', 'Soriana', 26)])
-            st.markdown(f"<div class='brandrow'>{chips}<span class='cap'>Spend outside OXXO</span>"
-                        f"<span class='rate'>{c_out * 100:.2f}%</span></div>", unsafe_allow_html=True)
-            st.slider('Commission on spend outside OXXO', 0.25, 2.0, BASE_OUT, step=0.05, format='%.2f%%', key='c_out_pct')
-
     changed = abs(cltv_user - kpis['cltv_per_user']) > 0.005
     d_cltv = cltv_user - kpis['cltv_per_user']
     kpi_row([
@@ -303,6 +286,23 @@ with tab_over:
                                hovertemplate='<b>%{y}</b><br>CLTV per user: $%{x:,.0f}<extra></extra>'))
         fig.update_xaxes(range=[0, p['cltv_per_user'].max() * 1.4], tickprefix='$')
         st.plotly_chart(style(fig, 340, legend=False), width='stretch')
+
+    with st.container(border=True):
+        section('CLTV commission assumptions')
+        st.markdown("<div class='note'>Team assumption; Spin does not publish its rates. "
+                    "The sliders update CLTV and revenue in every tab.</div>", unsafe_allow_html=True)
+        s1, s2 = st.columns(2, gap='large')
+        with s1:
+            st.markdown(f"<div class='brandrow'><span class='chip'>{logo('oxxo.svg', 'OXXO', 30)}</span>"
+                        f"<span class='cap'>Spend at OXXO</span>"
+                        f"<span class='rate'>{c_oxxo * 100:.2f}%</span></div>", unsafe_allow_html=True)
+            st.slider('Commission on OXXO spend', 0.25, 2.0, BASE_OXXO, step=0.05, format='%.2f%%', key='c_oxxo_pct')
+        with s2:
+            chips = ''.join(f"<span class='chip'>{logo(f, alt, ht)}</span>" for f, alt, ht in
+                            [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('soriana.svg', 'Soriana', 26)])
+            st.markdown(f"<div class='brandrow'>{chips}<span class='cap'>Spend outside OXXO</span>"
+                        f"<span class='rate'>{c_out * 100:.2f}%</span></div>", unsafe_allow_html=True)
+            st.slider('Commission on spend outside OXXO', 0.25, 2.0, BASE_OUT, step=0.05, format='%.2f%%', key='c_out_pct')
 
     pw = personas.set_index('name')
     top = pw['pct_revenue'].idxmax()
