@@ -27,16 +27,45 @@ st.markdown(f"""
 /* ---------- page width: use the whole screen ---------- */
 [data-testid="stMainBlockContainer"], .block-container {{max-width: 100%; padding: 3.6rem 2.2rem 3rem;}}
 
+/* ---------- viewport-based layout of the Overview tab (two screens) ----------
+   --top-fixed = everything above the Overview content that is not the banner:
+   page padding (3.6rem) + gap above the banner (1rem) + banner margin (1rem) + tab bar (40px)
+   + tab-panel padding (1rem). --toolbar = Streamlit's fixed top bar. */
+:root {{--toolbar: 3.75rem; --hdr-h: clamp(190px, 32vh, 340px); --top-fixed: calc(6.6rem + 40px);}}
+
 /* ---------- header ---------- */
-.spin-header {{display: flex; align-items: center; gap: 26px;
-  background: linear-gradient(120deg, {PURPLE_DARK} 0%, {PURPLE} 65%, #8A55E0 100%);
-  border-radius: 14px; padding: 18px 28px; margin-bottom: 14px; color: {WHITE}; border-bottom: 5px solid {ORANGE};}}
-.spin-header .hlogo {{flex: 0 0 auto; padding-right: 26px; border-right: 1px solid rgba(255,255,255,.35);
-  display: flex; align-items: center;}}
-.spin-header .hlogo img {{height: 84px; display: block;}}
+.spin-header {{box-sizing: border-box; min-height: var(--hdr-h); display: flex; align-items: center;
+  gap: clamp(20px, 2vw, 40px); background: linear-gradient(120deg, {PURPLE_DARK} 0%, {PURPLE} 65%, #8A55E0 100%);
+  border-radius: 16px; padding: clamp(16px, 3vh, 34px) clamp(24px, 2.6vw, 48px); margin: 0 0 1rem; color: {WHITE};
+  border-bottom: 6px solid {ORANGE};}}
+.spin-header .hlogo {{flex: 0 0 auto; align-self: stretch; padding-right: clamp(20px, 2vw, 40px);
+  border-right: 1px solid rgba(255,255,255,.35); display: flex; align-items: center;}}
+.spin-header .hlogo img {{height: clamp(84px, 14vh, 160px); display: block;}}
 .spin-header .htxt {{flex: 1 1 auto; min-width: 0;}}
-.spin-header .title {{font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 0 0 8px;}}
-.spin-header .sub {{font-size: .88rem; opacity: .92; line-height: 1.45;}}
+.spin-header .title {{font-size: clamp(2rem, 4.6vh, 3.2rem); font-weight: 700; line-height: 1.15;
+  margin: 0 0 clamp(8px, 1.4vh, 16px);}}
+.spin-header .sub {{font-size: clamp(.9rem, 1.9vh, 1.2rem); opacity: .92; line-height: 1.5; max-width: 95ch;}}
+
+/* Screen 1: cards + KPIs fill the rest of the first window (banner and tabs above). */
+.st-key-ov_screen1 {{min-height: calc(100vh - var(--top-fixed) - var(--hdr-h)); justify-content: space-evenly; row-gap: 0;}}
+.st-key-ov_screen1 [data-testid="stMarkdownContainer"] {{margin-bottom: 0;}}   /* Streamlit's -1rem would skew the spacing */
+.st-key-ov_screen1 .tguide, .st-key-ov_screen1 .kpis {{margin: 0;}}
+.st-key-ov_screen1 .tab-card {{min-height: clamp(130px, 25vh, 290px); padding: clamp(12px, 2.2vh, 26px) clamp(14px, 1.3vw, 24px);}}
+.st-key-ov_screen1 .tab-card .t {{font-size: clamp(1rem, 2.2vh, 1.4rem); margin-bottom: clamp(4px, 1vh, 12px);}}
+.st-key-ov_screen1 .tab-card .d {{font-size: clamp(.88rem, 1.75vh, 1.12rem); line-height: 1.5;}}
+
+/* Screen 2: both charts + the commission box fit in one window below the toolbar. */
+/* chart height = window - toolbar - section titles - commission box (~214px) - 1rem gap - 1.5rem breathing room */
+:root {{--s2-title: 2.6rem; --s2-box: 214px; --chart-h: max(250px, calc(100vh - var(--toolbar) - var(--s2-title) - var(--s2-box) - 2.5rem));}}
+.st-key-ov_screen2 .sec {{margin: 0; height: var(--s2-title); align-items: center;}}
+div.st-key-ov_chart_l.st-key-ov_chart_l, div.st-key-ov_chart_r.st-key-ov_chart_r {{height: var(--chart-h) !important;
+  min-height: 250px; flex: 0 0 auto !important;}}
+.st-key-ov_chart_l > [data-testid="stElementContainer"], .st-key-ov_chart_r > [data-testid="stElementContainer"] {{
+  flex: 1 1 0 !important; min-height: 0; height: 100% !important;}}
+.st-key-ov_chart_l [data-testid="stFullScreenFrame"], .st-key-ov_chart_r [data-testid="stFullScreenFrame"],
+.st-key-ov_chart_l [data-testid="stPlotlyChart"], .st-key-ov_chart_r [data-testid="stPlotlyChart"] {{height: 100% !important;}}
+.st-key-ov_assump .sec {{height: 2rem;}}
+.st-key-ov_assump .note {{margin: 0 0 4px;}}
 .logo-alt {{font-weight: 800; letter-spacing: .03em;}}
 
 /* ---------- section titles (fixed height so side-by-side blocks line up) ---------- */
@@ -245,64 +274,70 @@ with tab_over:
         ('Model', PURPLE_DARK, 'Current Flip-Out model: test metrics (PR-AUC, capture and lift at 10%), top drivers, '
                                'performance by persona and a comparison with the previous model.'),
     ]
-    st.markdown("<div class='tguide'>" + ''.join(
-        f"<div class='tab-card' style='border-top:4px solid {color}'><div class='t'>{name}</div>"
-        f"<div class='d'>{h(desc)}</div></div>" for name, color, desc in TAB_GUIDE) + "</div>", unsafe_allow_html=True)
+    # Screen 1 (first window, with the banner and tab bar above): tab guide + KPIs
+    with st.container(key='ov_screen1'):
+        st.markdown("<div class='tguide'>" + ''.join(
+            f"<div class='tab-card' style='border-top:4px solid {color}'><div class='t'>{name}</div>"
+            f"<div class='d'>{h(desc)}</div></div>" for name, color, desc in TAB_GUIDE) + "</div>", unsafe_allow_html=True)
 
-    changed = abs(cltv_user - kpis['cltv_per_user']) > 0.005
-    d_cltv = cltv_user - kpis['cltv_per_user']
-    kpi_row([
-        kpi('Users', f"{kpis['users']:,}", help='Unique users in the dataset'),
-        kpi('OXXO spend share', f"{kpis['oxxo_spend_share']:.1%}",
-            help='Share of 2025 spend made at OXXO (estimated as OXXO share of transactions x spend)'),
-        kpi('Flip-Out rate', f"{kpis['flipout_rate']:.1%}",
-            help='Share of eligible users that moved >= 10 pp of their spend outside OXXO in Jun-Jul 2026'),
-        kpi('Avg monthly spend', money(kpis['avg_monthly_spend']), help='Average 2025 monthly spend per user (MXN)'),
-        kpi('CLTV per user', money(cltv_user),
-            f"{signed_money(d_cltv)} vs {BASE_OXXO:.1f}% / {BASE_OUT:.1f}%" if changed else None, sgn(d_cltv),
-            help=f"Commission {c_oxxo:.2%} OXXO / {c_out:.2%} outside; average account age "
-                 f"{kpis['account_age_days']:,.0f} days used as lifespan"),
-    ])
+        changed = abs(cltv_user - kpis['cltv_per_user']) > 0.005
+        d_cltv = cltv_user - kpis['cltv_per_user']
+        kpi_row([
+            kpi('Users', f"{kpis['users']:,}", help='Unique users in the dataset'),
+            kpi('OXXO spend share', f"{kpis['oxxo_spend_share']:.1%}",
+                help='Share of 2025 spend made at OXXO (estimated as OXXO share of transactions x spend)'),
+            kpi('Flip-Out rate', f"{kpis['flipout_rate']:.1%}",
+                help='Share of eligible users that moved >= 10 pp of their spend outside OXXO in Jun-Jul 2026'),
+            kpi('Avg monthly spend', money(kpis['avg_monthly_spend']), help='Average 2025 monthly spend per user (MXN)'),
+            kpi('CLTV per user', money(cltv_user),
+                f"{signed_money(d_cltv)} vs {BASE_OXXO:.1f}% / {BASE_OUT:.1f}%" if changed else None, sgn(d_cltv),
+                help=f"Commission {c_oxxo:.2%} OXXO / {c_out:.2%} outside; average account age "
+                     f"{kpis['account_age_days']:,.0f} days used as lifespan"),
+        ])
 
-    left, right = st.columns([3, 2], gap='large')
-    with left:
-        section('Users by persona vs. where the value is')
-        rows = {'Users': 'pct_users', 'Revenue 2025': 'pct_revenue', 'Total CLTV': 'pct_total_cltv'}
-        fig = go.Figure()
-        for _, p in personas.iterrows():
-            fig.add_bar(y=list(rows), x=[p[v] for v in rows.values()], name=p['name'], orientation='h',
-                        marker=dict(color=p['color'], line=dict(width=0)),
-                        text=[f"{p[v]:.0%}" if p[v] >= 0.05 else '' for v in rows.values()],
-                        textposition='inside', insidetextanchor='middle',
-                        customdata=[[int(p['users'])]] * 3,
-                        hovertemplate=f"<b>{p['name']}</b><br>%{{y}}: %{{x:.1%}}<br>Users: %{{customdata[0]:,}}<extra></extra>")
-        fig.update_layout(barmode='stack', bargap=0.35, xaxis=dict(tickformat='.0%', range=[0, 1]), yaxis=dict(autorange='reversed'))
-        st.plotly_chart(style(fig, 340), width='stretch')
-    with right:
-        section('CLTV per user by persona', 'MXN')
-        p = personas.sort_values('cltv_per_user')
-        fig = go.Figure(go.Bar(x=p['cltv_per_user'], y=p['name'], orientation='h', marker_color=list(p['color']),
-                               text=[money(v) for v in p['cltv_per_user']], textposition='outside', cliponaxis=False,
-                               hovertemplate='<b>%{y}</b><br>CLTV per user: $%{x:,.0f}<extra></extra>'))
-        fig.update_xaxes(range=[0, p['cltv_per_user'].max() * 1.4], tickprefix='$')
-        st.plotly_chart(style(fig, 340, legend=False), width='stretch')
+    # Screen 2 (one window after scrolling): both charts + commission assumptions
+    with st.container(key='ov_screen2'):
+        left, right = st.columns([3, 2], gap='large')
+        with left:
+            section('Users by persona vs. where the value is')
+            rows = {'Users': 'pct_users', 'Revenue 2025': 'pct_revenue', 'Total CLTV': 'pct_total_cltv'}
+            fig = go.Figure()
+            for _, p in personas.iterrows():
+                fig.add_bar(y=list(rows), x=[p[v] for v in rows.values()], name=p['name'], orientation='h',
+                            marker=dict(color=p['color'], line=dict(width=0)),
+                            text=[f"{p[v]:.0%}" if p[v] >= 0.05 else '' for v in rows.values()],
+                            textposition='inside', insidetextanchor='middle',
+                            customdata=[[int(p['users'])]] * 3,
+                            hovertemplate=f"<b>{p['name']}</b><br>%{{y}}: %{{x:.1%}}<br>Users: %{{customdata[0]:,}}<extra></extra>")
+            fig.update_layout(barmode='stack', bargap=0.35, xaxis=dict(tickformat='.0%', range=[0, 1]), yaxis=dict(autorange='reversed'))
+            with st.container(key='ov_chart_l'):
+                st.plotly_chart(style(fig, None), width='stretch', height='stretch')
+        with right:
+            section('CLTV per user by persona', 'MXN')
+            p = personas.sort_values('cltv_per_user')
+            fig = go.Figure(go.Bar(x=p['cltv_per_user'], y=p['name'], orientation='h', marker_color=list(p['color']),
+                                   text=[money(v) for v in p['cltv_per_user']], textposition='outside', cliponaxis=False,
+                                   hovertemplate='<b>%{y}</b><br>CLTV per user: $%{x:,.0f}<extra></extra>'))
+            fig.update_xaxes(range=[0, p['cltv_per_user'].max() * 1.4], tickprefix='$')
+            with st.container(key='ov_chart_r'):
+                st.plotly_chart(style(fig, None, legend=False), width='stretch', height='stretch')
 
-    with st.container(border=True):
-        section('CLTV commission assumptions')
-        st.markdown("<div class='note'>Team assumption; Spin does not publish its rates. "
-                    "The sliders update CLTV and revenue in every tab.</div>", unsafe_allow_html=True)
-        s1, s2 = st.columns(2, gap='large')
-        with s1:
-            st.markdown(f"<div class='brandrow'><span class='chip'>{logo('oxxo.svg', 'OXXO', 30)}</span>"
-                        f"<span class='cap'>Spend at OXXO</span>"
-                        f"<span class='rate'>{c_oxxo * 100:.2f}%</span></div>", unsafe_allow_html=True)
-            st.slider('Commission on OXXO spend', 0.25, 2.0, BASE_OXXO, step=0.05, format='%.2f%%', key='c_oxxo_pct')
-        with s2:
-            chips = ''.join(f"<span class='chip'>{logo(f, alt, ht)}</span>" for f, alt, ht in
-                            [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('soriana.svg', 'Soriana', 26)])
-            st.markdown(f"<div class='brandrow'>{chips}<span class='cap'>Spend outside OXXO</span>"
-                        f"<span class='rate'>{c_out * 100:.2f}%</span></div>", unsafe_allow_html=True)
-            st.slider('Commission on spend outside OXXO', 0.25, 2.0, BASE_OUT, step=0.05, format='%.2f%%', key='c_out_pct')
+        with st.container(border=True, key='ov_assump'):
+            section('CLTV commission assumptions')
+            st.markdown("<div class='note'>Team assumption; Spin does not publish its rates. "
+                        "The sliders update CLTV and revenue in every tab.</div>", unsafe_allow_html=True)
+            s1, s2 = st.columns(2, gap='large')
+            with s1:
+                st.markdown(f"<div class='brandrow'><span class='chip'>{logo('oxxo.svg', 'OXXO', 30)}</span>"
+                            f"<span class='cap'>Spend at OXXO</span>"
+                            f"<span class='rate'>{c_oxxo * 100:.2f}%</span></div>", unsafe_allow_html=True)
+                st.slider('Commission on OXXO spend', 0.25, 2.0, BASE_OXXO, step=0.05, format='%.2f%%', key='c_oxxo_pct')
+            with s2:
+                chips = ''.join(f"<span class='chip'>{logo(f, alt, ht)}</span>" for f, alt, ht in
+                                [('walmart.svg', 'Walmart', 22), ('heb.png', 'H-E-B', 28), ('soriana.svg', 'Soriana', 26)])
+                st.markdown(f"<div class='brandrow'>{chips}<span class='cap'>Spend outside OXXO</span>"
+                            f"<span class='rate'>{c_out * 100:.2f}%</span></div>", unsafe_allow_html=True)
+                st.slider('Commission on spend outside OXXO', 0.25, 2.0, BASE_OUT, step=0.05, format='%.2f%%', key='c_out_pct')
 
     pw = personas.set_index('name')
     top = pw['pct_revenue'].idxmax()

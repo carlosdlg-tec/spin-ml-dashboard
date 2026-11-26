@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Layout check screenshots (local only)
+layout_screenshots/
