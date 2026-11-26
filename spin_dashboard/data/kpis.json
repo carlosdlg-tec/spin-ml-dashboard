@@ -1,0 +1,13 @@
+{
+  "users": 50000,
+  "oxxo_spend_share": 0.10250235230053713,
+  "flipout_rate": 0.35697362186068554,
+  "eligible_users": 12662,
+  "avg_monthly_spend": 1992.9908534980445,
+  "cltv_per_user": 660.0158322622392,
+  "account_age_days": 1062.44578,
+  "lifespan_months": 34.90581618069815,
+  "revenue_2025": 10657769.218516443,
+  "c_oxxo": 0.005,
+  "c_out": 0.01
+}

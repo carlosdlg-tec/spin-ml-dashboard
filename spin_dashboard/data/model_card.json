@@ -1,0 +1,34 @@
+{
+  "version": "v2.0",
+  "previous_version": "v1.0",
+  "name": "Flip-Out propensity - Gradient boosting (HistGradientBoosting), base features",
+  "target": "Flip-Out: in each of the next 2 months, non-OXXO share of spend rises >= 10 pp vs. the last 6 months and the user makes >= 2 non-OXXO purchases",
+  "train": "Snapshot T1 = 31-Dec-2025 (obs. Jul-Dec 2025, outcome Jan-Feb 2026), 13,665 eligible users, 5-fold CV",
+  "test": "Snapshot T2 = 31-May-2026, out-of-time (obs. Dec 2025-May 2026, outcome Jun-Jul 2026), 12,662 eligible users",
+  "params": "class_weight=None, learning_rate=0.05, max_leaf_nodes=15, min_samples_leaf=100",
+  "cv_pr_auc": 0.5468,
+  "cv_pr_auc_previous": 0.5134,
+  "base_rate": 0.35697362186068554,
+  "current": {
+    "pr_auc": 0.5579333136006784,
+    "roc_auc": 0.7022726581062251,
+    "capture_top10": 0.18827433628318585,
+    "precision_top10": 0.6716653512233622,
+    "lift_top10": 1.8815545745996045
+  },
+  "previous": {
+    "pr_auc": 0.5570059827663535,
+    "roc_auc": 0.69672994611139,
+    "capture_top10": 0.18672566371681415,
+    "precision_top10": 0.6661404893449092,
+    "lift_top10": 1.8660776274524866
+  },
+  "previous_name": "Logistic regression baseline, base features",
+  "changes": [
+    "Algorithm: logistic regression (v1.0) -> gradient boosting, which captures non-linear effects of the OXXO share level and purchase frequency. CV PR-AUC 0.513 -> 0.547.",
+    "Out-of-time test (T2): PR-AUC 0.557 -> 0.558; capture in the top 10% 18.7% -> 18.8%.",
+    "Stage 1 features (PCA scores + persona) were tested as inputs and dropped: CV PR-AUC gain of only 0.002, smaller than the variation between folds. Persona is kept for targeting and reporting.",
+    "Class weights for the imbalance were tested; no gain, so they are not used.",
+    "The model is now linked to value: every user in the target list carries a CLTV estimate (0.5% OXXO / 1.0% outside commission assumption)."
+  ]
+}

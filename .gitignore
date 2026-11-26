@@ -1,0 +1,11 @@
+# Raw datasets over GitHub's 100 MB file limit (keep them locally; see README)
+Dataset_clean.csv
+Evidence 3/g3_propensity_model_dataset.csv
+
+# Runtime / editor files
+spin_dashboard/streamlit.log
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+desktop.ini

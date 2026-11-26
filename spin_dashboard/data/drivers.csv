@@ -1,0 +1,14 @@
+feature,driver,mean_abs_shap,lr_coefficient,direction
+tx_count,Transactions per month,0.1014,-1.252,Higher value -> less likely to flip out
+non_oxxo_share_obs,Spend share outside OXXO,0.0721,-0.636,Higher value -> less likely to flip out
+oxxo_share,OXXO share of transactions,0.0682,-0.728,Higher value -> less likely to flip out
+oxxo_share_change,Recent change in OXXO share,0.0453,-0.232,Higher value -> less likely to flip out
+merchant_entropy,Merchant diversity,0.0227,-0.085,Higher value -> less likely to flip out
+ecommerce_ratio,E-commerce share,0.0211,0.131,Higher value -> more likely to flip out
+age_years,Customer age,0.0101,-0.08,Higher value -> less likely to flip out
+decline_rate,Decline rate,0.008,0.078,Higher value -> more likely to flip out
+avg_ticket,Average ticket,0.0066,-0.417,Higher value -> less likely to flip out
+avg_monthly_spend,Average monthly spend,0.0042,0.9,Higher value -> more likely to flip out
+account_age_days,Account age (days),0.0037,-0.004,Higher value -> less likely to flip out
+active_months_pct,Active months,0.0006,0.069,Higher value -> more likely to flip out
+creation_flow_mobile,Onboarded in app,0.0001,0.022,Higher value -> more likely to flip out
