@@ -21,6 +21,8 @@ WHITE, GREY = '#FFFFFF', '#9A93A8'
 MUTED, GRID = GREY, 'rgba(128,128,128,0.22)'
 FONT = dict(family='system-ui, -apple-system, Segoe UI, sans-serif', size=13)
 DAYS_PER_MONTH = 30.4375
+# Chart labels in black; in dark mode black would be invisible, so they use the theme's light text there.
+LABEL_INK = '#ECEAF1' if getattr(st.context.theme, 'type', 'light') == 'dark' else '#000000'
 
 st.markdown(f"""
 <style>
@@ -40,10 +42,10 @@ st.markdown(f"""
   border-bottom: 6px solid {ORANGE};}}
 .spin-header .hlogo {{flex: 0 0 auto; align-self: stretch; padding-right: clamp(20px, 2vw, 40px);
   border-right: 1px solid rgba(255,255,255,.35); display: flex; align-items: center;}}
-.spin-header .hlogo img {{height: clamp(84px, 14vh, 160px); display: block;}}
+.spin-header .hlogo img {{height: clamp(110px, 20vh, 220px); display: block;}}
 .spin-header .htxt {{flex: 1 1 auto; min-width: 0;}}
-.spin-header .title {{font-size: clamp(2rem, 4.6vh, 3.2rem); font-weight: 700; line-height: 1.15;
-  margin: 0 0 clamp(8px, 1.4vh, 16px);}}
+.spin-header .title {{font-size: clamp(2.6rem, 6.4vh, 4.4rem); font-weight: 700; line-height: 1.1;
+  margin: 0 0 clamp(8px, 1.6vh, 18px);}}
 .spin-header .sub {{font-size: clamp(.9rem, 1.9vh, 1.2rem); opacity: .92; line-height: 1.5; max-width: 95ch;}}
 
 /* Screen 1: cards + KPIs fill the rest of the first window (banner and tabs above). */
@@ -255,8 +257,8 @@ st.markdown(
     f"<div class='htxt'><div class='title'>Customer Value &amp; Flip-Out Dashboard</div>"
     f"<div class='sub'>{kpis['users']:,} users, monthly data Jan 2025 - Jul 2026. Personas built on 2025 behaviour; "
     f"Flip-Out scores as of 31-May-2026 ({kpis['eligible_users']:,} eligible users). CLTV = avg monthly spend x blended "
-    f"commission ({c_oxxo:.2%} OXXO / {c_out:.2%} outside, adjustable in Overview) x lifespan in months. "
-    f"Light / dark theme: menu &#8942; (top right).</div></div></div>",
+    f"commission ({c_oxxo:.2%} OXXO / {c_out:.2%} outside, adjustable in Overview) x lifespan in months."
+    f"</div></div></div>",
     unsafe_allow_html=True)
 
 tab_over, tab_pers, tab_target, tab_model = st.tabs(['Overview', 'Personas', 'Target list', 'Model'])
@@ -433,8 +435,6 @@ with tab_pers:
             return f'rgba({r},{g},{b},{alpha})'
 
         theta = [METRICS[k][0] for k in keys]
-        # Axis labels in black; in dark mode black would be invisible, so they use the theme's light text there.
-        RADAR_LABEL = '#ECEAF1' if getattr(st.context.theme, 'type', 'light') == 'dark' else '#000000'
         fig = go.Figure()
         # Darkest persona first = drawn at the back; lighter shapes on top stay visible.
         for _, p in sub.assign(lum=sub['color'].map(luminance)).sort_values('lum').iterrows():
@@ -448,7 +448,7 @@ with tab_pers:
         fig.update_layout(polar=dict(bgcolor='rgba(0,0,0,0)', domain=dict(x=[0, 0.78], y=[0, 1]),
                                      radialaxis=dict(range=[0, 1], showticklabels=False, showline=False, ticks='', gridcolor=GRID),
                                      angularaxis=dict(gridcolor=GRID, linecolor=GRID, rotation=90, direction='clockwise',
-                                                      tickfont=dict(size=12, color=RADAR_LABEL))))
+                                                      tickfont=dict(size=12, color=LABEL_INK))))
         style(fig, 560)
         fig.update_layout(margin=dict(l=90, r=20, t=50, b=50),
                           legend=dict(orientation='v', x=0.82, xanchor='left', y=0.5, yanchor='middle',
@@ -460,9 +460,13 @@ with tab_pers:
         z = (sub[keys] - personas[keys].mean()) / personas[keys].std()
         txt = [[METRICS[k][1](v) for k, v in zip(keys, row)] for row in sub[keys].values]
         fig = go.Figure(go.Heatmap(z=z.values, x=[METRICS[k][0] for k in keys], y=sub['name'], text=txt,
-                                   texttemplate='%{text}', colorscale='RdBu_r', zmid=0, zmin=-1.6, zmax=1.6, colorbar=dict(title='vs. avg<br>persona (z)'),
+                                   texttemplate='%{text}', textfont=dict(color='#000000'),   # cell values: always black
+                                   # RdBu without its darkest ends, so the black values stay readable in every cell
+                                   colorscale=[[0, '#4393C3'], [0.25, '#92C5DE'], [0.5, '#F7F7F7'], [0.75, '#F4A582'],
+                                               [1, '#D6604D']], zmid=0, zmin=-1.6, zmax=1.6, colorbar=dict(title='vs. avg<br>persona (z)'),
                                    hovertemplate='<b>%{y}</b><br>%{x}: %{text}<extra></extra>'))
-        fig.update_yaxes(autorange='reversed')
+        fig.update_yaxes(autorange='reversed', tickfont=dict(color=LABEL_INK))
+        fig.update_xaxes(tickfont=dict(color=LABEL_INK))
         st.plotly_chart(style(fig, 120 + 70 * len(sub), legend=False), width='stretch')
         st.caption('Color = how far each persona is from the average persona (red above, blue below). Text = real value.')
     else:
@@ -527,7 +531,7 @@ with tab_target:
             st.plotly_chart(style(fig, 400), width='stretch')
         with right:
             section('Distribution of the Flip-Out score', f'top {cap}% contacted')
-            HIST_BLUE, HIST_ORANGE, HIST_INK = '#2a78d6', '#dd8452', '#52514e'   # original colors (same as Figure F8a)
+            HIST_BLUE, HIST_ORANGE, HIST_INK = LIGHT_BLUE, ORANGE, '#52514e'     # Spin blue / Spin orange
             cutoff = contact['flipout_score'].min()                  # score of the last user inside the top cap%
             bins = np.linspace(0, 1, 41)                             # 40 bins of width 0.025
             centers = (bins[:-1] + bins[1:]) / 2
